@@ -7,5 +7,7 @@
     "rules": {
         "quotemark": [true, "single"]
     },
-    "rulesDirectory": []
+    "rulesDirectory": [
+        "max-classes-per-file" : 0
+    ]
 }
