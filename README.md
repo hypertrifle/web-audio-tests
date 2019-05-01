@@ -1,12 +1,9 @@
 
-# webpack-typescript
+# web audio tests.
 
-Install with `yarn`
+Install with `npm i`
 
-Start with `yarn start` 
-
-Production Build with `yarn build`
-
+Start with `npm start` 
 
 ## Webpack 4
 
@@ -14,8 +11,11 @@ Production Build with `yarn build`
 - html-webpack-plugin creates a index.html
 - sourcemaps enabled
 
-## Sane defaults
+## notes
+https://github.com/mdn/webaudio-examples
+https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Advanced_techniques
+https://www.sitepoint.com/using-fourier-transforms-web-audio-api/
+http://blog.chrislowis.co.uk/2013/06/17/synthesis-web-audio-api-envelopes.html
+http://www.softsynth.com/webaudio/gainramp.php
 
-- default tsconfig
-- default tslint (with one override for single quote quotemark)
-
+https://www.emusician.com/how-to/master-class-analog-drum-design
