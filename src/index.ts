@@ -13,10 +13,6 @@ export enum OscillatorType {
    CUSTOM = 'custom',
 }
 
-export enum BiquadFilterNodeType {
-   NONE = 0,
-   LOWPASS = 1,
-}
 export interface IAudioTimeRange {
    start: number;
    end: number;
@@ -37,9 +33,10 @@ export interface IOscillatorConfig {
 
 // https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode
 export interface IBiquadFilterConfig {
-   type: BiquadFilterNodeType;
-   frequency: number | IInterpolationValueAndEase;
-   qFactor: number | IInterpolationValueAndEase;
+   type: BiquadFilterType;
+   frequency?: IInterpolationValueAndEase;
+   qFactor?: IInterpolationValueAndEase;
+   gain?: IInterpolationValueAndEase;
 }
 
 export interface ISoundConfig {
@@ -53,10 +50,10 @@ export class Sound {
 
    public outputNode: AudioNode;
 
-   private _oscillators: Array<{node: OscillatorNode, config: IOscillatorConfig}> = [];
+   private _oscillators: Array<{ node: OscillatorNode, config: IOscillatorConfig }> = [];
    private _oscillatorConnectionPoint: AudioNode;
 
-   private _biquadFilters: BiquadFilterNode[] = [];
+   private _biquadFilters: Array<{ node: BiquadFilterNode, config: IBiquadFilterConfig }> = [];
    private _context: AudioContext;
    private _length: number;
 
@@ -64,7 +61,7 @@ export class Sound {
    private _gainEnvelope?: GainNode;
    private _config: ISoundConfig;
 
-   constructor(audioContext: AudioContext, outputNode: AudioNode, config: ISoundConfig ) {
+   constructor(audioContext: AudioContext, outputNode: AudioNode, config: ISoundConfig) {
       this._context = audioContext;
       this.outputNode = this._oscillatorConnectionPoint = outputNode;
       this._length = config.length;
@@ -89,14 +86,19 @@ export class Sound {
 
       // biquadFilters
       if (config.biquadFilter) {
-         // we have a biquadFilter config
+         // we have a biquadFilter config, so lets just set it up for now, and chain together
+         const bqf: BiquadFilterNode = this._context.createBiquadFilter();
+         bqf.type = config.biquadFilter.type;
+         bqf.connect(currentLastNode);
+         currentLastNode = bqf;
+         this._biquadFilters.push({ node: bqf, config: config.biquadFilter });
 
       }
 
       if (config.oscillator) {
 
          // if we have any attack and decay envelope params we will need an additional gain node apply this effect.
-         if ((config.oscillator.attack || config.oscillator.decay) && this._gainEnvelope === undefined)  {
+         if ((config.oscillator.attack || config.oscillator.decay) && this._gainEnvelope === undefined) {
             this._gainEnvelope = audioContext.createGain();
             this._gainEnvelope.connect(currentLastNode);
             currentLastNode = this._gainEnvelope;
@@ -116,7 +118,7 @@ export class Sound {
          osc.type = oConfig.type;
       }
 
-      this._oscillators.push({node: osc, config: oConfig});
+      this._oscillators.push({ node: osc, config: oConfig });
       osc.connect(destinationNode);
 
    }
@@ -127,7 +129,7 @@ export class Sound {
     * @param {{node: OscillatorNode, config: IOscillatorConfig}} nodeConfigPair
     * @memberof Sound
     */
-   public resetOscillator(nodeConfigPair: {node: OscillatorNode, config: IOscillatorConfig}) {
+   public resetOscillator(nodeConfigPair: { node: OscillatorNode, config: IOscillatorConfig }) {
 
       // disconnect previous
       nodeConfigPair.node.disconnect();
@@ -152,6 +154,55 @@ export class Sound {
    public play() {
       const now = this._context.currentTime;
 
+      for (const bqf of this._biquadFilters) {
+         bqf.node.frequency.cancelScheduledValues(now);
+         bqf.node.Q.cancelScheduledValues(now);
+         bqf.node.gain.cancelScheduledValues(now);
+
+         if (bqf.config.frequency) {
+            bqf.node.frequency.setValueAtTime(bqf.config.frequency.values.start, now);
+            switch (bqf.config.frequency.ease) {
+
+               case EaseType.EXPONENTIAL:
+                  bqf.node.frequency.exponentialRampToValueAtTime(bqf.config.frequency.values.end, now + this._length);
+                  break;
+
+               default:
+                  bqf.node.frequency.linearRampToValueAtTime(bqf.config.frequency.values.end, now + this._length);
+                  break;
+            }
+         }
+
+         if (bqf.config.qFactor) {
+            bqf.node.Q.setValueAtTime(bqf.config.qFactor.values.start, now);
+            switch (bqf.config.qFactor.ease) {
+
+               case EaseType.EXPONENTIAL:
+                  bqf.node.Q.exponentialRampToValueAtTime(bqf.config.qFactor.values.end, now + this._length);
+                  break;
+
+               default:
+                  bqf.node.Q.linearRampToValueAtTime(bqf.config.qFactor.values.end, now + this._length);
+                  break;
+            }
+         }
+
+         if (bqf.config.gain) {
+            bqf.node.gain.setValueAtTime(bqf.config.gain.values.start, now);
+            switch (bqf.config.gain.ease) {
+
+               case EaseType.EXPONENTIAL:
+                  bqf.node.gain.exponentialRampToValueAtTime(bqf.config.gain.values.end, now + this._length);
+                  break;
+
+               default:
+                  bqf.node.gain.linearRampToValueAtTime(bqf.config.gain.values.end, now + this._length);
+                  break;
+            }
+         }
+
+      }
+
       for (const osc of this._oscillators) {
 
          this.resetOscillator(osc);
@@ -169,12 +220,16 @@ export class Sound {
                default:
                   osc.node.frequency.linearRampToValueAtTime(osc.config.frequency.values.end, now + this._length);
                   break;
-               }
+            }
+         }
+
+         // reset all schedualed events on our gain envelope.
+         if (this._gainEnvelope) {
+            this._gainEnvelope.gain.cancelScheduledValues(now);
+            this._gainEnvelope.gain.setValueAtTime(1, now);
          }
 
          if (osc.config.attack && this._gainEnvelope) {
-
-            this._gainEnvelope.gain.cancelScheduledValues(now);
 
             const startValue = osc.config.attack.values.start || 0;
             const endValue = osc.config.attack.values.end || 1;
@@ -183,12 +238,12 @@ export class Sound {
             const length = (osc.config.attack.length || this._length / 2);
 
             switch (osc.config.attack.ease) {
-               case EaseType.EXPONENTIAL :
-                     this._gainEnvelope.gain.exponentialRampToValueAtTime(endValue, now + length  );
-                     break;
+               case EaseType.EXPONENTIAL:
+                  this._gainEnvelope.gain.exponentialRampToValueAtTime(endValue, now + length);
+                  break;
                default:
-                     this._gainEnvelope.gain.linearRampToValueAtTime(endValue, now + length  );
-                     break;
+                  this._gainEnvelope.gain.linearRampToValueAtTime(endValue, now + length);
+                  break;
             }
          }
 
@@ -201,12 +256,12 @@ export class Sound {
             this._gainEnvelope.gain.setValueAtTime(startValue, now + this._length - length);
 
             switch (osc.config.decay.ease) {
-               case EaseType.EXPONENTIAL :
-                     this._gainEnvelope.gain.exponentialRampToValueAtTime(endValue, now + this._length  );
-                     break;
+               case EaseType.EXPONENTIAL:
+                  this._gainEnvelope.gain.exponentialRampToValueAtTime(endValue, now + this._length);
+                  break;
                default:
-                     this._gainEnvelope.gain.linearRampToValueAtTime(endValue, now + this._length  );
-                     break;
+                  this._gainEnvelope.gain.linearRampToValueAtTime(endValue, now + this._length);
+                  break;
             }
          }
 
@@ -242,9 +297,29 @@ export class Drum808 implements IDrumPatch {
 
       this.kick = new Sound(context, output, {
          length: 0.5,
+         biquadFilter: {
+            type: 'lowpass',
+            frequency: {
+               values: {
+                  start: 300,
+                  end: 100,
+               },
+               ease: EaseType.LINEAR,
+
+            },
+            qFactor: {
+               values: {
+                  start: 0,
+                  end: 15,
+
+               },
+               ease: EaseType.LINEAR,
+            },
+
+         },
          oscillator: {
             frequency: {
-               values: {start: 50, end: 40},
+               values: { start: 50, end: 40 },
             },
             attack: {
                values: {
@@ -295,23 +370,23 @@ export default class SoundTests {
             this._setUpComplete = true;
             if (this._kit && this._kit.kick) {
 
-            this._kit.kick.play();
+               this._kit.kick.play();
             }
          } else {
             if (this._kit && this._kit.kick) {
-            this._kit.kick.play();
+               this._kit.kick.play();
+            }
          }
-      }
       };
 
       document.addEventListener('keydown', (e: KeyboardEvent) => {
          if (this._kit) {
-         switch (e.keyCode) {
-            case 49:
-            if (this._kit.kick) {
-               this._kit.kick.play();
-         }
-      }
+            switch (e.keyCode) {
+               case 49:
+                  if (this._kit.kick) {
+                     this._kit.kick.play();
+                  }
+            }
          }
       });
 
