@@ -54,6 +54,8 @@ export class Sound {
    public outputNode: AudioNode;
 
    private _oscillators: Array<{node: OscillatorNode, config: IOscillatorConfig}> = [];
+   private _oscillatorConnectionPoint: AudioNode;
+
    private _biquadFilters: BiquadFilterNode[] = [];
    private _context: AudioContext;
    private _length: number;
@@ -64,7 +66,7 @@ export class Sound {
 
    constructor(audioContext: AudioContext, outputNode: AudioNode, config: ISoundConfig ) {
       this._context = audioContext;
-      this.outputNode = outputNode;
+      this.outputNode = this._oscillatorConnectionPoint = outputNode;
       this._length = config.length;
       this._config = config;
 
@@ -101,13 +103,14 @@ export class Sound {
          }
 
          // and finally add our osc.
-         this.addOscillator(config.oscillator, currentLastNode, audioContext);
+         this._oscillatorConnectionPoint = currentLastNode;
+         this.addOscillator(config.oscillator, currentLastNode);
       }
 
    }
 
-   public addOscillator(oConfig: IOscillatorConfig, destinationNode: AudioNode, ctx: AudioContext) {
-      const osc = ctx.createOscillator();
+   public addOscillator(oConfig: IOscillatorConfig, destinationNode: AudioNode) {
+      const osc = this._context.createOscillator();
 
       if (oConfig.type) {
          osc.type = oConfig.type;
@@ -116,6 +119,20 @@ export class Sound {
       this._oscillators.push({node: osc, config: oConfig});
       osc.connect(destinationNode);
 
+   }
+
+   public resetOscillator(nodeConfigPair: {node: OscillatorNode, config: IOscillatorConfig}) {
+
+      nodeConfigPair.node.disconnect();
+
+      nodeConfigPair.node = this._context.createOscillator();
+
+      if (nodeConfigPair.config.type) {
+         nodeConfigPair.node.type = nodeConfigPair.config.type;
+      }
+
+      // finally connect it
+      nodeConfigPair.node.connect(this._oscillatorConnectionPoint);
    }
 
    public play() {
@@ -128,6 +145,8 @@ export class Sound {
          } catch (e) {
             console.warn('error trying to stop previous sounds playing');
          }
+
+         this.resetOscillator(osc);
 
          osc.node.frequency.setValueAtTime(osc.config.frequency.values.start, now);
 
