@@ -18,4 +18,5 @@ Start with `npm start`
 - [http://blog.chrislowis.co.uk/2013/06/17/synthesis-web-audio-api-envelopes.html](http://blog.chrislowis.co.uk/2013/06/17/synthesis-web-audio-api-envelopes.html)
 - [http://www.softsynth.com/webaudio/gainramp.php](http://www.softsynth.com/webaudio/gainramp.php)
 
+- [https://webaudioapi.com/samples](https://webaudioapi.com/samples)
 - [808 synth descriptions](https://www.emusician.com/how-to/master-class-analog-drum-design)
