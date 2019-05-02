@@ -1,4 +1,16 @@
 
+/*
+
+
+
+
+
+*/
+
+
+
+
+
 export interface AudioTimeRange {
    start:number;
    end:number;
@@ -30,33 +42,42 @@ export interface BiquadFilterConfig {
 export interface SoundConfig {
    oscillator: OscillatorConfig|OscillatorConfig[];
    biquadFilters?:BiquadFilterConfig|BiquadFilterConfig[];
+   volume?:number;
 }
 
 export class Sound {
 
-   oscillators:OscillatorNode[] = [];
-   biquadFilters:BiquadFilterNode[] = [];
-   outputNode:AudioNode;
-   context: AudioContext;
+   private _oscillators:OscillatorNode[] = [];
+   private _biquadFilters:BiquadFilterNode[] = [];
+   private _context: AudioContext;
+
+   private _gainNode?:GainNode;
+   
+   public outputNode:AudioNode;
 
    constructor(audioContext: AudioContext, outputNode:AudioNode, config: SoundConfig ) {
-      this.context = audioContext;
+      this._context = audioContext;
       this.outputNode = outputNode;
 
-      if(config.oscillator){
-         //we have oscilator config(s)
-         if(config.oscillator instanceof Array){
-            //multiple oscilators
-         
-         
-         
-         } else {
-            //single oscilator.
+      // this is store the last item in our chain of nodes, so we can connect up as we go.
+      let currentLastNode:AudioNode = this.outputNode;
+      const now:number = audioContext.currentTime;
+
+      //now we work backwards through our nodes so we can connect as we go.
+      //we will end with the raw oscilator, and start with our post processing.
 
 
-         }
+      if(config.volume){
+         //we we have a master volume change
+         this._gainNode = audioContext.createGain();
+         this._gainNode.gain.setValueAtTime(config.volume,now);
 
+         //connect to last in chain and save refence for next.
+         this._gainNode.connect(currentLastNode);
+         currentLastNode = this._gainNode;
       }
+
+      //biquadFilters
       if(config.biquadFilters){
          //we have biquadFilter config(s)
          if(config.biquadFilters instanceof Array){
@@ -71,7 +92,28 @@ export class Sound {
          }
 
       }
+
+      if(config.oscillator){
+         //we have oscilator config(s)
+         if(config.oscillator instanceof Array){
+            //multiple oscilators
+         
+         
+         
+         } else {
+            //single oscilator.
+
+
+         }
+
+
+
+      }
+      
    }
+
+
+
 
 }
 
@@ -82,10 +124,10 @@ export default class SoundTests {
 
       document.body.innerHTML =
       `
-      <div class="ui">
-      <button id="playButton">Start</button>
-      </div>
-      `;
+<div class="ui">
+<button id="playButton">Start</button>
+</div>
+`;
 
       const button: HTMLButtonElement = document.getElementById('playButton') as HTMLButtonElement;
       

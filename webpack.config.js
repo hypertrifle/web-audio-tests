@@ -1,10 +1,8 @@
 const path = require('path');
 const HTMLPlugin = require('html-webpack-plugin');
 
-module.exports = {
+config = {
   entry: './src/index.ts',
-  devtool: 'inline-source-map',
-  mode:"development",
   module: {
     rules: [
       {
@@ -24,4 +22,17 @@ module.exports = {
   plugins: [
     new HTMLPlugin()
   ]
+};
+
+
+module.exports = (env, argv) => {
+  if (argv.mode === 'development') {
+    config.devtool = 'inline-source-map';
+  }
+
+  if (argv.mode === 'production') {
+    config.devtool = undefined;
+  }
+
+  return config;
 };

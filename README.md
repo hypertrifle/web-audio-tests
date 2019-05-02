@@ -1,9 +1,8 @@
-
-# web audio tests.
+# web audio tests
 
 Install with `npm i`
 
-Start with `npm start` 
+Start with `npm start`
 
 ## Webpack 4
 
@@ -12,10 +11,11 @@ Start with `npm start`
 - sourcemaps enabled
 
 ## notes
-https://github.com/mdn/webaudio-examples
-https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Advanced_techniques
-https://www.sitepoint.com/using-fourier-transforms-web-audio-api/
-http://blog.chrislowis.co.uk/2013/06/17/synthesis-web-audio-api-envelopes.html
-http://www.softsynth.com/webaudio/gainramp.php
 
-https://www.emusician.com/how-to/master-class-analog-drum-design
+- [web audio examples](https://github.com/mdn/webaudio-examples)
+- [https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Advanced_techniques](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Advanced_techniques)
+- [https://www.sitepoint.com/using-fourier-transforms-web-audio-api/](https://www.sitepoint.com/using-fourier-transforms-web-audio-api/)
+- [http://blog.chrislowis.co.uk/2013/06/17/synthesis-web-audio-api-envelopes.html](http://)blog.chrislowis.co.uk/2013/06/17/synthesis-web-audio-api-envelopes.html
+- [http://www.softsynth.com/webaudio/gainramp.php](http://www.softsynth.com/webaudio/gainramp.php)
+
+- [808 synth descriptions](https://www.emusician.com/how-to/master-class-analog-drum-design)
