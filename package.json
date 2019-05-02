@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "UNLICENCED",
   "scripts": {
-    "dev": "webpack-dev-server --config webpack.config.ts -d --port=8082 --open-page webpack-dev-server/build/",
+    "dev": "webpack-dev-server --config webpack.config.ts -d --port=8082 --open-page webpack-dev-server/",
     "build": "webpack --mode production"
   },
   "devDependencies": {
@@ -20,8 +20,7 @@
     "uglifyjs-webpack-plugin": "^2.1.2",
     "webpack": "^4.28.4",
     "webpack-cli": "^3.2.1",
-    "webpack-dev-server": "^3.3.1",
-    "webpack-serve": "^2.0.3"
+    "webpack-dev-server": "^3.3.1"
   },
   "dependencies": {}
 }

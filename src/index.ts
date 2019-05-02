@@ -121,30 +121,38 @@ export class Sound {
 
    }
 
+   /**
+    * oscillators are one use, thefire we must create a new one each time we wish to play the sound.
+    *
+    * @param {{node: OscillatorNode, config: IOscillatorConfig}} nodeConfigPair
+    * @memberof Sound
+    */
    public resetOscillator(nodeConfigPair: {node: OscillatorNode, config: IOscillatorConfig}) {
 
+      // disconnect previous
       nodeConfigPair.node.disconnect();
 
+      // create now oscillator
       nodeConfigPair.node = this._context.createOscillator();
 
+      // re configure.
       if (nodeConfigPair.config.type) {
          nodeConfigPair.node.type = nodeConfigPair.config.type;
       }
 
-      // finally connect it
+      // finally connect it the disred output
       nodeConfigPair.node.connect(this._oscillatorConnectionPoint);
    }
 
+   /**
+    * play this configured sound.
+    *
+    * @memberof Sound
+    */
    public play() {
       const now = this._context.currentTime;
 
       for (const osc of this._oscillators) {
-
-         try {
-         osc.node.stop();
-         } catch (e) {
-            console.warn('error trying to stop previous sounds playing');
-         }
 
          this.resetOscillator(osc);
 
@@ -165,6 +173,8 @@ export class Sound {
          }
 
          if (osc.config.attack && this._gainEnvelope) {
+
+            this._gainEnvelope.gain.cancelScheduledValues(now);
 
             const startValue = osc.config.attack.values.start || 0;
             const endValue = osc.config.attack.values.end || 1;
@@ -234,8 +244,21 @@ export class Drum808 implements IDrumPatch {
          length: 0.5,
          oscillator: {
             frequency: {
-               values: {start: 440, end: 460},
-
+               values: {start: 50, end: 40},
+            },
+            attack: {
+               values: {
+                  start: 0.0001,
+                  end: 1,
+               },
+               length: 0.001,
+            },
+            decay: {
+               values: {
+                  start: 1,
+                  end: 0.001,
+               },
+               length: 0.3,
             },
             type: OscillatorType.SINE,
          },
@@ -280,6 +303,18 @@ export default class SoundTests {
          }
       }
       };
+
+      document.addEventListener('keydown', (e: KeyboardEvent) => {
+         if (this._kit) {
+         switch (e.keyCode) {
+            case 49:
+            if (this._kit.kick) {
+               this._kit.kick.play();
+         }
+      }
+         }
+      });
+
    }
 
 }
