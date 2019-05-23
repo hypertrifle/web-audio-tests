@@ -1,14 +1,13 @@
 export default class SoundTests {
-   private _setUpComplete: boolean = false;
+
    constructor() {
-
       console.clear();
-
-      document.body.innerHTML = `
-<div class="ui">
-<button id="playButton">Start</button>
-</div>
-`;
+      document.body.innerHTML =
+      `
+      <div class="ui">
+      <button id="playButton">Start</button>
+      </div>
+      `;
 
       const button: HTMLButtonElement = document.getElementById('playButton') as HTMLButtonElement;
 

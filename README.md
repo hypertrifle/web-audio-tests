@@ -2,7 +2,9 @@
 
 Install with `npm i`
 
-Start with `npm start`
+Start with `npm dev`
+
+Production build with `npm build`
 
 ## Webpack 4
 
